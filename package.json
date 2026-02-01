@@ -1,0 +1,12 @@
+{
+  "name": "m3u8-proxy-server",
+  "version": "1.0.0",
+  "description": "M3U8/video segment proxy - host on Railway, Render, Fly.io, or Oracle Cloud (no CPU limit)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
