@@ -158,4 +158,4 @@ MIT License - Free for personal and commercial use.
 
 ## Related Projects
 
-- [Zenime](https://github.com/emnextech/emnexanimes) - Anime streaming frontend using this proxy
+- [EmnexAnime](https://emnexanime.site) - Anime streaming site using this proxy
