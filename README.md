@@ -1,123 +1,161 @@
-# Anime M3U8 Proxy
+# M3U8 Proxy Server for Anime Streaming
 
-A small HTTP proxy server for HLS (M3U8) video streams. It fetches playlists and segments from upstream servers with the correct referer and CORS headers so you can play streams in the browser without CORS or referer blocks.
+A lightweight Node.js proxy server designed for HLS/M3U8 video streaming. Proxies video streams with proper headers to bypass CORS and referer restrictions. Perfect for anime streaming applications.
 
----
+## Features
 
-## Description
+- **M3U8 Playlist Proxying** - Rewrites URLs in playlists to route through proxy
+- **TS Segment Streaming** - Streams video segments with proper headers
+- **Custom Headers Support** - Pass custom Referer/Origin headers via JSON
+- **Legacy API Support** - Backwards compatible with `?url=&referer=` format
+- **CORS Enabled** - Works with browser-based video players
+- **Zero Dependencies** - Uses only Node.js built-in modules
+- **Docker Ready** - Includes Dockerfile for containerized deployment
 
-Many video streams (e.g. anime) are served as HLS: a main `.m3u8` playlist plus `.ts` segment files. Browsers often block these because of CORS or strict referer checks. This proxy runs on your own server, requests the URLs with the right headers, rewrites playlist URLs to go through the proxy, and returns the data with permissive CORS so your frontend can use it.
+## API Endpoints
 
-**Use case:** Your web app needs to play an M3U8 stream. You send the stream URL (and optional referer) to this proxy; the proxy fetches it and sends it back with CORS enabled. No database, no heavy dependencies—just Node.js.
-
----
-
-## What It Does
-
-- Accepts `GET` requests with `url` (encoded stream or segment URL) and optional `referer`
-- Fetches that URL with a browser-like User-Agent and the given Referer/Origin
-- Forwards `Range` headers for video seeking
-- For M3U8 playlists: rewrites segment URIs so they also go through the proxy
-- Adds CORS headers so any origin can use the response
-
----
-
-## Usage
-
-**Endpoint:** `GET /?url=<encoded-url>&referer=<encoded-referer>`
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `url` | Yes | Full URL of the M3U8 or segment (e.g. `.ts`). Must be URL-encoded. |
-| `referer` | No | Referer sent to the upstream server. Default: `https://rapid-cloud.co/` |
-
-**Example (browser or frontend):**
+### New Format (Recommended)
 
 ```
-https://your-proxy.fly.dev/?url=https%3A%2F%2Fexample.com%2Fstream.m3u8&referer=https%3A%2F%2Fexample.com%2F
+GET /m3u8-proxy?url=<m3u8_url>&headers=<json_headers>
+GET /ts-proxy?url=<segment_url>&headers=<json_headers>
 ```
 
-Use that URL as the `src` for your video element or HLS player.
-
----
-
-## Run Locally
-
-**Requirements:** Node.js 18 or higher.
-
+**Example:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/anime_proxy.git
-cd anime_proxy
-npm install
-npm start
+# Proxy an M3U8 playlist
+curl "https://your-proxy.fly.dev/m3u8-proxy?url=https%3A%2F%2Fexample.com%2Fstream.m3u8&headers=%7B%22Referer%22%3A%22https%3A%2F%2Fmegacloud.club%2F%22%7D"
 ```
 
-Server runs at `http://localhost:3000`. Override the port with the `PORT` environment variable.
+### Legacy Format (Backwards Compatible)
 
-**Quick test:**
+```
+GET /?url=<encoded_url>&referer=<encoded_referer>
+```
 
+**Example:**
 ```bash
-curl "http://localhost:3000/?url=ENCODED_M3U8_URL&referer=ENCODED_REFERER"
+curl "https://your-proxy.fly.dev/?url=https%3A%2F%2Fexample.com%2Fstream.m3u8&referer=https%3A%2F%2Fmegacloud.club%2F"
 ```
 
----
+## Deployment to Fly.io
 
-## Deploy
+### Prerequisites
 
-### Fly.io
+1. Install [Fly CLI](https://fly.io/docs/hands-on/install-flyctl/)
+2. Create a Fly.io account: `flyctl auth signup`
+3. Login: `flyctl auth login`
 
-1. Install [flyctl](https://fly.io/docs/hands-on/install-flyctl/) and log in:
+### Deploy Steps
+
+1. **Clone this repository:**
    ```bash
-   fly auth login
+   git clone https://github.com/emnextech/M3U8-Proxy-Server-Fly.io-.git
+   cd M3U8-Proxy-Server-Fly.io-
    ```
 
-2. From the project folder:
-   ```bash
-   fly launch
-   ```
-   Pick an app name and region; skip Postgres and Redis.
-
-3. Deploy:
-   ```bash
-   fly deploy
+2. **Edit `fly.toml`** and replace `your-app-name` with your desired app name:
+   ```toml
+   app = 'my-m3u8-proxy'  # Choose a unique name
    ```
 
-4. Your proxy base URL: `https://YOUR-APP-NAME.fly.dev/`
+3. **Create and deploy the app:**
+   ```bash
+   flyctl launch --copy-config --no-deploy
+   flyctl deploy
+   ```
 
-### Docker
+4. **Your proxy is now live at:**
+   ```
+   https://my-m3u8-proxy.fly.dev/
+   ```
+
+### Fly.io Regions
+
+Choose a region close to your users for best performance:
+
+| Code | Location |
+|------|----------|
+| `iad` | Washington, D.C. (US) |
+| `lax` | Los Angeles (US) |
+| `fra` | Frankfurt (EU) |
+| `sin` | Singapore (Asia) |
+| `syd` | Sydney (Australia) |
+| `jnb` | Johannesburg (Africa) |
+
+## Local Development
 
 ```bash
-docker build -t anime-m3u8-proxy .
-docker run -p 8080:8080 -e PORT=8080 anime-m3u8-proxy
+# Run locally
+node server.js
+
+# Server runs on http://localhost:3000
 ```
 
-### Other platforms (Railway, Render, Oracle Cloud)
-
-Set the start command to `node server.js` and the `PORT` env var to the value provided by the platform. No database or extra build steps needed.
-
----
-
-## Environment
+## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | Port the server listens on. Use the platform’s port (e.g. `8080`) when deploying. |
+| `PORT` | `3000` | Server port |
+| `HOST` | `0.0.0.0` | Server host |
+| `PUBLIC_URL` | Auto-detected | Public URL for URL rewriting |
 
----
+## Integration Examples
 
-## Project Layout
+### With HLS.js
 
+```javascript
+const proxyBase = 'https://your-proxy.fly.dev/';
+const streamUrl = 'https://example.com/video.m3u8';
+const headers = JSON.stringify({ Referer: 'https://megacloud.club/' });
+
+const url = proxyBase + 'm3u8-proxy?url=' + encodeURIComponent(streamUrl) + '&headers=' + encodeURIComponent(headers);
+
+const hls = new Hls();
+hls.loadSource(url);
+hls.attachMedia(videoElement);
 ```
-anime_proxy/
-├── server.js      # Proxy server (Node.js)
-├── package.json   # Dependencies and scripts
-├── Dockerfile     # Docker image (Node 20 Alpine)
-├── fly.toml       # Fly.io config (optional)
-└── README.md
+
+### Legacy Format
+
+```javascript
+const proxyBase = 'https://your-proxy.fly.dev/?url=';
+const streamUrl = 'https://example.com/video.m3u8';
+const referer = 'https://megacloud.club/';
+
+const url = proxyBase + encodeURIComponent(streamUrl) + '&referer=' + encodeURIComponent(referer);
 ```
 
----
+## Docker Deployment
 
-## Disclaimer
+```bash
+# Build
+docker build -t m3u8-proxy .
 
-This proxy is for personal or educational use. You are responsible for complying with the terms of the streaming sites and applicable laws. The authors do not host or endorse any specific content.
+# Run
+docker run -p 3000:3000 m3u8-proxy
+```
+
+## How It Works
+
+1. **M3U8 Playlists**: When you request an M3U8 file through `/m3u8-proxy`:
+   - Fetches the original playlist with your specified headers
+   - Rewrites all URLs in the playlist to route through the proxy
+   - Returns the modified playlist to your player
+
+2. **Video Segments**: When the player requests `/ts-proxy`:
+   - Streams the segment directly from the origin
+   - Forwards your custom headers (Referer, Origin, etc.)
+   - Passes through range requests for seeking support
+
+## Default Referer
+
+If no referer is provided, the proxy uses `https://megacloud.club/` which works with most anime CDNs.
+
+## License
+
+MIT License - Free for personal and commercial use.
+
+## Related Projects
+
+- [Zenime](https://github.com/emnextech/emnexanimes) - Anime streaming frontend using this proxy

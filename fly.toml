@@ -1,15 +1,16 @@
-# fly.toml app configuration file generated for emnex-m3u8-proxy on 2026-02-01T22:37:43+02:00
+# fly.toml - Fly.io Configuration for M3U8 Proxy Server
+# Replace 'your-app-name' with your chosen app name before deploying
 #
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# See https://fly.io/docs/reference/configuration/
 
-app = 'emnex-m3u8-proxy'
-primary_region = 'jnb'
+app = 'your-app-name'
+primary_region = 'iad'  # Choose your preferred region (e.g., iad, lax, fra, sin)
 
 [build]
 
 [env]
   PORT = '8080'
+  HOST = '0.0.0.0'
 
 [http_service]
   internal_port = 8080
